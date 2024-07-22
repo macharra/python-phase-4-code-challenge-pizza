@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from models import db, Restaurant, RestaurantPizza, Pizza
 from flask_migrate import Migrate
-from flask import Flask, request, make_response, jsonify
+from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
 import os
 
@@ -14,7 +14,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.json.compact = False
 
 migrate = Migrate(app, db)
-
 db.init_app(app)
 
 api = Api(app)
@@ -32,14 +31,14 @@ api.add_resource(RestaurantsResource, '/restaurants')
 
 class RestaurantResource(Resource):
     def get(self, id):
-        restaurant = db.session.get(Restaurant, id)
+        restaurant = Restaurant.query.get(id)
         if restaurant:
             return restaurant.to_dict()
         else:
             return {"error": "Restaurant not found"}, 404
 
     def delete(self, id):
-        restaurant = db.session.get(Restaurant, id)
+        restaurant = Restaurant.query.get(id)
         if restaurant:
             RestaurantPizza.query.filter_by(restaurant_id=id).delete()
             db.session.delete(restaurant)
@@ -61,8 +60,12 @@ class RestaurantPizzasResource(Resource):
     def post(self):
         data = request.get_json()
         try:
+            price = data['price']
+            if not (1 <= price <= 30):
+                raise ValueError("Price must be between 1 and 30")
+            
             new_restaurant_pizza = RestaurantPizza(
-                price=data['price'],
+                price=price,
                 pizza_id=data['pizza_id'],
                 restaurant_id=data['restaurant_id']
             )
@@ -71,7 +74,7 @@ class RestaurantPizzasResource(Resource):
             return new_restaurant_pizza.to_dict(), 201
         except ValueError as e:
             db.session.rollback()
-            return {"errors": ["Price must be between 1 and 30"]}, 400
+            return {"errors": [str(e)]}, 400
         except Exception as e:
             db.session.rollback()
             return {"errors": [str(e)]}, 400

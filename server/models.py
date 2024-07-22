@@ -19,12 +19,11 @@ class Restaurant(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     address = db.Column(db.String, nullable=False)
     restaurant_pizzas = db.relationship('RestaurantPizza', back_populates='restaurant')
-    pizzas = association_proxy('restaurant_pizzas', 'pizza')
+    pizzas = association_proxy('restaurant_pizzas', 'pizza')  # Fix: import association_proxy
     serialize_rules = ('-restaurant_pizzas.restaurant',)
 
     def __repr__(self):
         return f"<Restaurant {self.name}>"
-
 
 class Pizza(db.Model, SerializerMixin):
     __tablename__ = "pizzas"
@@ -33,12 +32,11 @@ class Pizza(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     ingredients = db.Column(db.String, nullable=False)
     restaurant_pizzas = db.relationship('RestaurantPizza', back_populates='pizza')
-    restaurants = association_proxy('restaurant_pizzas', 'restaurant')
+    restaurants = association_proxy('restaurant_pizzas', 'restaurant')  # Fix: import association_proxy
     serialize_rules = ('-restaurant_pizzas.pizza',)
 
     def __repr__(self):
         return f"<Pizza {self.name}, {self.ingredients}>"
-
 
 class RestaurantPizza(db.Model, SerializerMixin):
     __tablename__ = "restaurant_pizzas"
@@ -49,6 +47,7 @@ class RestaurantPizza(db.Model, SerializerMixin):
     pizza_id = db.Column(db.Integer, db.ForeignKey('pizzas.id'), nullable=False)
     restaurant = db.relationship('Restaurant', back_populates='restaurant_pizzas')
     pizza = db.relationship('Pizza', back_populates='restaurant_pizzas')
+
     @validates('price')
     def validate_price(self, key, price):
         if price < 1 or price > 30:
