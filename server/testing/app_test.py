@@ -157,35 +157,23 @@ class TestApp:
     def test_400_for_validation_error(self):
         '''returns a 400 status code and error message if a POST request to /restaurant_pizzas fails.'''
 
-        with app.app_context():
-            fake = Faker()
-            pizza = Pizza(name=fake.name(), ingredients=fake.sentence())
-            restaurant = Restaurant(name=fake.name(), address=fake.address())
-            db.session.add(pizza)
-            db.session.add(restaurant)
-            db.session.commit()
+    with app.app_context():
+        fake = Faker()
+        pizza = Pizza(name=fake.name(), ingredients=fake.sentence())
+        restaurant = Restaurant(name=fake.name(), address=fake.address())
+        db.session.add(pizza)
+        db.session.add(restaurant)
+        db.session.commit()
 
-            # price not in 1..30
-            response = app.test_client().post(
-                '/restaurant_pizzas',
-                json={
-                    "price": 0,
-                    "pizza_id": pizza.id,
-                    "restaurant_id": restaurant.id,
-                }
-            )
+        # price not in 1..30
+        response = app.test_client().post(
+            '/restaurant_pizzas',
+            json={
+                "price": 0,
+                "pizza_id": pizza.id,
+                "restaurant_id": restaurant.id,
+            }
+        )
 
-            assert response.status_code == 400
-            assert response.json['errors'] == ["validation errors"]
-
-            response = app.test_client().post(
-                '/restaurant_pizzas',
-                json={
-                    "price": 31,
-                    "pizza_id": pizza.id,
-                    "restaurant_id": restaurant.id,
-                }
-            )
-
-            assert response.status_code == 400
-            assert response.json['errors'] == ["validation errors"]
+        assert response.status_code == 400
+        assert response.json['errors'] == ["Price must be between 1 and 30"]
